@@ -21,6 +21,8 @@ Open Grafana at `http://localhost:3000` and sign in with `admin` / `admin`.
 
 The pre-provisioned dashboard is in the `Solar` folder as `Sungrow Realtime`.
 
+Only Grafana is exposed to the host. InfluxDB is reachable from Grafana and Telegraf inside the shared Compose network namespace, but port `8086` is not published.
+
 Kiosk URL:
 
 ```bash
@@ -41,16 +43,21 @@ TIME_RANGE=now-24h REFRESH=10s ./scripts/kiosk-url.sh
 
 The dashboard currently uses the `sungrow` InfluxDB measurement and includes:
 
-- Inverter temperature
+- Inverter and battery temperature
 - Current solar DC power
-- Today and total yield
+- Solar yield for the selected Grafana time range
+- Grid consumption for the selected Grafana time range
+- Battery consumption for the selected Grafana time range
 - Load power
 - Grid import power, shown as a positive value
-- MPPT 1/2 voltage and current
-- Grid voltage and frequency
-- Battery current, power, SOC, SOH, and temperature when exposed by the inverter
+- MPPT 1/2 voltage and current, with separate voltage/current axes
+- Grid voltage, with zero-valued phases hidden
+- Grid frequency
+- Battery power and SOC when exposed by the inverter
 
 On this WLAN Modbus path, phase current registers and total active power returned Modbus illegal-address errors, so they are intentionally not polled.
+
+The battery fields currently read `0` when no battery is installed or when the inverter does not expose battery data over this Modbus path.
 
 The wrapper scripts use Compose too:
 
@@ -70,6 +77,8 @@ Query latest values:
 ```bash
 docker compose exec influxdb influx query --org solar --token solar-token 'from(bucket: "solar") |> range(start: -5m) |> filter(fn: (r) => r._measurement == "sungrow") |> last()'
 ```
+
+InfluxDB is intentionally not exposed on `localhost:8086`; use `docker compose exec influxdb ...` for database inspection.
 
 If the dashboard is empty or the value is clearly wrong, try the non-offset register:
 
