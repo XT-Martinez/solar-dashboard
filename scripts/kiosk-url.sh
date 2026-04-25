@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GRAFANA_URL="${GRAFANA_URL:-http://localhost:3000}"
+GRAFANA_URL="${GRAFANA_URL:-http://localhost:3500}"
 DASHBOARD_UID="${DASHBOARD_UID:-sungrow-realtime}"
 DASHBOARD_SLUG="${DASHBOARD_SLUG:-sungrow-realtime}"
 TIME_RANGE="${TIME_RANGE:-now-6h}"

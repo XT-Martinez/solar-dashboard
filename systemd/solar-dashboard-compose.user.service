@@ -1,0 +1,19 @@
+[Unit]
+Description=Solar Dashboard Docker Compose stack
+Wants=podman.socket
+After=podman.socket default.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=DOCKER_HOST=unix://%t/podman/podman.sock
+WorkingDirectory=/var/mnt/DATA/repo/solar-dashboard
+ExecStartPre=/usr/bin/docker info
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

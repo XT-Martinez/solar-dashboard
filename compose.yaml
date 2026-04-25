@@ -3,7 +3,7 @@ services:
     image: docker.io/library/influxdb:2.7
     container_name: solar-poc-influxdb
     ports:
-      - "3000:3000"
+      - "3500:3000"
     volumes:
       - solar-poc-influxdb:/var/lib/influxdb2
     environment:

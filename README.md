@@ -17,7 +17,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open Grafana at `http://localhost:3000` and sign in with `admin` / `admin`.
+Open Grafana at `http://localhost:3500` and sign in with `admin` / `admin`.
 
 The pre-provisioned dashboard is in the `Solar` folder as `Sungrow Realtime`.
 
@@ -32,7 +32,7 @@ Kiosk URL:
 Default output:
 
 ```text
-http://localhost:3000/d/sungrow-realtime/sungrow-realtime?orgId=1&from=now-6h&to=now&refresh=5s&kiosk
+http://localhost:3500/d/sungrow-realtime/sungrow-realtime?orgId=1&from=now-6h&to=now&refresh=5s&kiosk
 ```
 
 You can change the display window or refresh rate:
@@ -65,6 +65,25 @@ The wrapper scripts use Compose too:
 ./scripts/start-poc.sh
 ./scripts/stop-poc.sh
 ```
+
+## Start at Login with Systemd
+
+On Bazzite, this stack can run as a user systemd service against the user Podman socket:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp systemd/solar-dashboard-compose.user.service ~/.config/systemd/user/solar-dashboard-compose.service
+systemctl --user daemon-reload
+systemctl --user enable --now solar-dashboard-compose.service
+```
+
+To start it at boot before login, enable linger once:
+
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
+For a rootful Docker setup, install `systemd/solar-dashboard-compose.service` under `/etc/systemd/system/` instead.
 
 ## Check Telegraf
 
