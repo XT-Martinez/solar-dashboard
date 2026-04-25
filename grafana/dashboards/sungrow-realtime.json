@@ -54,7 +54,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 4,
         "x": 0,
         "y": 0
       },
@@ -117,7 +117,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 4,
         "x": 12,
         "y": 0
       },
@@ -155,6 +155,132 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "orange",
+                "value": 2500
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"export_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Grid Power",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "orange",
+                "value": 2500
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) > 0.0 then float(v: r._value) else 0.0 }))\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Battery Draw",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
           "decimals": 1,
           "mappings": [],
           "thresholds": {
@@ -180,8 +306,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 8,
         "y": 0
       },
       "id": 3,
@@ -978,8 +1104,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 4,
+        "x": 4,
         "y": 0
       },
       "id": 10,
@@ -1138,6 +1264,6 @@
   "timezone": "browser",
   "title": "Sungrow Realtime",
   "uid": "sungrow-realtime",
-  "version": 13,
+  "version": 14,
   "weekStart": ""
 }
