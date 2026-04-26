@@ -56,7 +56,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 11
+        "y": 23
       },
       "id": 1,
       "options": {
@@ -117,9 +117,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 12,
-        "y": 11
+        "w": 5,
+        "x": 4,
+        "y": 23
       },
       "id": 2,
       "options": {
@@ -180,9 +180,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 16,
-        "y": 11
+        "w": 5,
+        "x": 14,
+        "y": 23
       },
       "id": 13,
       "options": {
@@ -243,8 +243,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 20,
+        "w": 6,
+        "x": 12,
         "y": 11
       },
       "id": 14,
@@ -267,11 +267,11 @@
       "pluginVersion": "10.4.12",
       "targets": [
         {
-          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) > 0.0 then float(v: r._value) else 0.0 }))\n  |> last()",
+          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> last()",
           "refId": "A"
         }
       ],
-      "title": "Current Battery Draw",
+      "title": "Battery Power",
       "type": "stat"
     },
     {
@@ -281,7 +281,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "decimals": 1,
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -306,8 +306,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 11
       },
       "id": 3,
@@ -341,6 +341,105 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_soc_percent\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "title": "Battery SOC History",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
           "decimals": 2,
           "mappings": [],
           "thresholds": {
@@ -358,9 +457,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 0,
-        "y": 15
+        "w": 5,
+        "x": 9,
+        "y": 23
       },
       "id": 4,
       "options": {
@@ -496,7 +595,7 @@
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
+        "w": 16,
         "x": 0,
         "y": 0
       },
@@ -612,7 +711,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 27
       },
       "id": 6,
       "options": {
@@ -817,7 +916,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 27
       },
       "id": 7,
       "options": {
@@ -941,7 +1040,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 29
+        "y": 37
       },
       "id": 8,
       "options": {
@@ -1043,7 +1142,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 29
+        "y": 37
       },
       "id": 9,
       "options": {
@@ -1104,8 +1203,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 4,
+        "w": 6,
+        "x": 0,
         "y": 11
       },
       "id": 10,
@@ -1159,9 +1258,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 15
+        "w": 5,
+        "x": 19,
+        "y": 23
       },
       "id": 11,
       "options": {
@@ -1214,9 +1313,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 15
+        "w": 6,
+        "x": 18,
+        "y": 11
       },
       "id": 12,
       "options": {
@@ -1264,6 +1363,6 @@
   "timezone": "browser",
   "title": "Sungrow Realtime",
   "uid": "sungrow-realtime",
-  "version": 16,
+  "version": 20,
   "weekStart": ""
 }
