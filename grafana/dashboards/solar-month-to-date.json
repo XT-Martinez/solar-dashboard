@@ -1,0 +1,720 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana",
+        "uid": "-- Grafana --"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 18,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Solar monthly summary\nSelect `month` from the available InfluxDB data. Set `electricity_rate` in PHP per kWh.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.4.12",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "System online"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "noValue": "No recent data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "from(bucket: \"solar\")\n  |> range(start: -10m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"running_state\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: 1 }))\n  |> keep(columns: [\"_time\", \"_value\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 3
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"total_dc_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Total generated",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 3
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"load_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Total consumed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 3
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"export_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Grid purchased",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "prefix:PHP "
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 3
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nconsumed = from(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"load_power_w\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0, metric: \"consumed\" }))\n  |> keep(columns: [\"_start\", \"metric\", \"_value\"])\n\ngrid = from(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"export_power_w\")\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0, metric: \"grid\" }))\n  |> keep(columns: [\"_start\", \"metric\", \"_value\"])\n\nunion(tables: [consumed, grid])\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"metric\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with _value: (r.consumed - r.grid) * ${electricity_rate} }))\n  |> keep(columns: [\"_value\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Est. savings vs no solar",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 7
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nconsumed = from(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"load_power_w\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0, metric: \"consumed\" }))\n  |> keep(columns: [\"_start\", \"metric\", \"_value\"])\n\ngrid = from(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"export_power_w\")\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0, metric: \"grid\" }))\n  |> keep(columns: [\"_start\", \"metric\", \"_value\"])\n\nunion(tables: [consumed, grid])\n  |> pivot(rowKey: [\"_start\"], columnKey: [\"metric\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with _value: if r.consumed > 0.0 then (r.consumed - r.grid) / r.consumed * 100.0 else 0.0 }))\n  |> keep(columns: [\"_value\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Self-sufficiency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\nimport \"strings\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"total_dc_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> window(every: 1d)\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _time: r._start, _value: r._value / 1000.0 }))\n  |> window(every: inf)\n  |> max()\n  |> map(fn: (r) => ({ r with _field: strings.substring(v: string(v: r._time), start: 0, end: 10) }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Best day generated",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "prefix:PHP "
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"export_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 * ${electricity_rate} }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Grid cost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kWh"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Consumption"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Grid_purchased"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Grid purchased"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 10,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "top",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "never",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xField": "Day",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "import \"date\"\nimport \"strings\"\n\nmonthStart = time(v: \"${month}-01T00:00:00Z\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"total_dc_power_w\", \"load_power_w\", \"export_power_w\"]))\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if r._field == \"export_power_w\" then if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 else float(v: r._value), _field: if r._field == \"total_dc_power_w\" then \"Production\" else if r._field == \"load_power_w\" then \"Consumption\" else \"Grid_purchased\" }))\n  |> window(every: 1d)\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _time: r._start, _value: r._value / 1000.0 }))\n  |> window(every: inf)\n  |> keep(columns: [\"_time\", \"_field\", \"_value\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ Day: strings.substring(v: string(v: r._time), start: 5, end: 10), Production: r.Production, Consumption: r.Consumption, Grid_purchased: r.Grid_purchased }))\n  |> sort(columns: [\"Day\"])",
+          "resultFormat": "table",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily production vs consumption",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": [
+    "solar",
+    "sungrow",
+    "summary"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "2026-04",
+          "value": "2026-04"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "InfluxDB"
+        },
+        "definition": "import \"strings\"\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: -2y)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"total_dc_power_w\")\n  |> window(every: 1mo)\n  |> first()\n  |> group()\n  |> map(fn: (r) => ({ _value: strings.substring(v: string(v: r._start), start: 0, end: 7) }))\n  |> distinct(column: \"_value\")\n  |> sort(columns: [\"_value\"], desc: true)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Month",
+        "multi": false,
+        "name": "month",
+        "options": [],
+        "query": "import \"strings\"\n\nfrom(bucket: \"solar_1m\")\n  |> range(start: -2y)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"total_dc_power_w\")\n  |> window(every: 1mo)\n  |> first()\n  |> group()\n  |> map(fn: (r) => ({ _value: strings.substring(v: string(v: r._start), start: 0, end: 7) }))\n  |> distinct(column: \"_value\")\n  |> sort(columns: [\"_value\"], desc: true)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "15.0",
+          "value": "15.0"
+        },
+        "hide": 0,
+        "label": "Electricity rate (PHP/kWh)",
+        "name": "electricity_rate",
+        "options": [],
+        "query": "15.0",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now/M",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Solar Month To Date",
+  "uid": "solar-month-to-date",
+  "version": 5,
+  "weekStart": ""
+}
