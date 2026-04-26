@@ -99,6 +99,27 @@ docker compose exec influxdb influx query --org solar --token solar-token 'from(
 
 InfluxDB is intentionally not exposed on `localhost:8086`; use `docker compose exec influxdb ...` for database inspection.
 
+## Configure InfluxDB Retention
+
+Compose runs `configure-retention` automatically when the stack starts. By default, it keeps raw `solar` samples for 90 days and writes 1-minute averages to `solar_1m` for 2 years.
+
+You can also rerun the setup manually:
+
+```bash
+docker compose run --rm configure-retention
+```
+
+Override the retention settings in `.env` or before running the Compose service:
+
+```bash
+INFLUX_RAW_RETENTION=2160h \
+INFLUX_DOWNSAMPLED_BUCKET=solar_1m \
+INFLUX_DOWNSAMPLED_RETENTION=17520h \
+docker compose run --rm configure-retention
+```
+
+The setup is safe to rerun. It updates the raw bucket retention, creates or updates the downsampled bucket, and creates or updates the `downsample-solar-1m` task.
+
 If the dashboard is empty or the value is clearly wrong, try the non-offset register:
 
 ```bash

@@ -28,6 +28,25 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USERNAME:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
 
+  configure-retention:
+    image: docker.io/library/influxdb:2.7
+    container_name: solar-poc-configure-retention
+    depends_on:
+      - influxdb
+    volumes:
+      - ./scripts/configure-retention.sh:/scripts/configure-retention.sh:Z,ro
+    environment:
+      INFLUX_HOST: http://influxdb:8086
+      INFLUX_ORG: ${INFLUX_ORG:-solar}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-solar}
+      INFLUX_TOKEN: ${INFLUX_TOKEN:-solar-token}
+      INFLUX_DOWNSAMPLED_BUCKET: ${INFLUX_DOWNSAMPLED_BUCKET:-solar_1m}
+      INFLUX_RAW_RETENTION: ${INFLUX_RAW_RETENTION:-2160h}
+      INFLUX_DOWNSAMPLED_RETENTION: ${INFLUX_DOWNSAMPLED_RETENTION:-17520h}
+      INFLUX_DOWNSAMPLE_TASK: ${INFLUX_DOWNSAMPLE_TASK:-downsample-solar-1m}
+    entrypoint: ["/bin/bash", "/scripts/configure-retention.sh"]
+    restart: "no"
+
   telegraf:
     image: docker.io/library/telegraf:1.30
     container_name: solar-poc-telegraf
@@ -35,6 +54,7 @@ services:
     user: telegraf
     depends_on:
       - influxdb
+      - configure-retention
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:Z,ro
     environment:
