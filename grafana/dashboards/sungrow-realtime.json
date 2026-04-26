@@ -181,7 +181,7 @@
       "gridPos": {
         "h": 4,
         "w": 5,
-        "x": 14,
+        "x": 9,
         "y": 23
       },
       "id": 13,
@@ -426,7 +426,7 @@
       "pluginVersion": "10.4.12",
       "targets": [
         {
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_soc_percent\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_soc_percent\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _field: \"Battery SOC\" }))\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
           "refId": "A"
         }
       ],
@@ -458,7 +458,7 @@
       "gridPos": {
         "h": 4,
         "w": 5,
-        "x": 9,
+        "x": 14,
         "y": 23
       },
       "id": 4,
@@ -1363,6 +1363,6 @@
   "timezone": "browser",
   "title": "Sungrow Realtime",
   "uid": "sungrow-realtime",
-  "version": 20,
+  "version": 22,
   "weekStart": ""
 }
