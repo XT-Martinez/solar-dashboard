@@ -101,7 +101,15 @@ InfluxDB is intentionally not exposed on `localhost:8086`; use `docker compose e
 
 ## Configure InfluxDB Retention
 
-Compose runs `configure-retention` automatically when the stack starts. By default, it keeps raw `solar` samples for 90 days and writes 1-minute averages to `solar_1m` for 2 years.
+Compose runs `configure-retention` automatically when the stack starts. By default, it keeps raw `solar` samples for 90 days and writes hourly energy rollups to `solar_1h` for 2 years.
+
+The hourly rollup stores kWh fields under the `sungrow_energy` measurement:
+
+- `production_kwh`
+- `consumption_kwh`
+- `grid_import_kwh`
+
+These fields are calculated from raw power samples with hourly `integral()` windows. This is more accurate for monthly energy summaries than storing hourly mean watts and integrating those means later.
 
 You can also rerun the setup manually:
 
@@ -113,20 +121,21 @@ Override the retention settings in `.env` or before running the Compose service:
 
 ```bash
 INFLUX_RAW_RETENTION=2160h \
-INFLUX_DOWNSAMPLED_BUCKET=solar_1m \
+INFLUX_DOWNSAMPLED_BUCKET=solar_1h \
+INFLUX_DOWNSAMPLE_EVERY=1h \
 INFLUX_DOWNSAMPLED_RETENTION=17520h \
 docker compose run --rm configure-retention
 ```
 
-The setup is safe to rerun. It updates the raw bucket retention, creates or updates the downsampled bucket, and creates or updates the `downsample-solar-1m` task.
+The setup is safe to rerun. It updates the raw bucket retention, creates or updates the downsampled bucket, and creates or updates the `downsample-solar-1h` task. The task runs incrementally every hour and only rolls up recent raw samples.
 
-If you add dashboards that use the downsampled `solar_1m` bucket after raw data already exists, run a one-time backfill so historical samples are available there too:
+If you add dashboards that use the downsampled `solar_1h` bucket after raw data already exists, run a one-time backfill so historical rollups are available there too:
 
 ```bash
 BACKFILL_START=2026-04-01T00:00:00Z ./scripts/backfill-downsample.sh
 ```
 
-Adjust `BACKFILL_START` to the first timestamp you want copied from `solar` into `solar_1m`. Without this, `solar_1m` only contains samples collected after the downsample task was created, so historical monthly totals can look too low.
+Adjust `BACKFILL_START` to the first timestamp you want copied from `solar` into `solar_1h`. Without this, `solar_1h` only contains samples collected after the downsample task was created, so historical monthly totals can look too low.
 
 If the dashboard is empty or the value is clearly wrong, try the non-offset register:
 

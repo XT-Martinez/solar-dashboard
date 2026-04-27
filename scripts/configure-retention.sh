@@ -5,10 +5,11 @@ INFLUX_ORG="${INFLUX_ORG:-solar}"
 INFLUX_BUCKET="${INFLUX_BUCKET:-solar}"
 INFLUX_TOKEN="${INFLUX_TOKEN:-solar-token}"
 INFLUX_HOST="${INFLUX_HOST:-http://127.0.0.1:8086}"
-INFLUX_DOWNSAMPLED_BUCKET="${INFLUX_DOWNSAMPLED_BUCKET:-${INFLUX_BUCKET}_1m}"
+INFLUX_DOWNSAMPLED_BUCKET="${INFLUX_DOWNSAMPLED_BUCKET:-${INFLUX_BUCKET}_1h}"
+INFLUX_DOWNSAMPLE_EVERY="${INFLUX_DOWNSAMPLE_EVERY:-1h}"
 INFLUX_RAW_RETENTION="${INFLUX_RAW_RETENTION:-2160h}"
 INFLUX_DOWNSAMPLED_RETENTION="${INFLUX_DOWNSAMPLED_RETENTION:-17520h}"
-INFLUX_DOWNSAMPLE_TASK="${INFLUX_DOWNSAMPLE_TASK:-downsample-${INFLUX_BUCKET}-1m}"
+INFLUX_DOWNSAMPLE_TASK="${INFLUX_DOWNSAMPLE_TASK:-downsample-${INFLUX_BUCKET}-${INFLUX_DOWNSAMPLE_EVERY}}"
 INFLUX_WAIT_ATTEMPTS="${INFLUX_WAIT_ATTEMPTS:-60}"
 
 influx() {
@@ -55,12 +56,40 @@ task_file="$(mktemp)"
 trap 'rm -f "${task_file}"' EXIT
 
 cat >"${task_file}" <<EOF_TASK
-option task = {name: "${INFLUX_DOWNSAMPLE_TASK}", every: 1m}
+option task = {name: "${INFLUX_DOWNSAMPLE_TASK}", every: ${INFLUX_DOWNSAMPLE_EVERY}}
 
-from(bucket: "${INFLUX_BUCKET}")
+production = from(bucket: "${INFLUX_BUCKET}")
   |> range(start: -task.every)
   |> filter(fn: (r) => r._measurement == "sungrow")
-  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+  |> filter(fn: (r) => r._field == "total_dc_power_w")
+  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))
+  |> window(every: ${INFLUX_DOWNSAMPLE_EVERY})
+  |> integral(unit: 1h)
+  |> map(fn: (r) => ({ r with _time: r._start, _measurement: "sungrow_energy", _field: "production_kwh", _value: r._value / 1000.0 }))
+  |> window(every: inf)
+
+consumption = from(bucket: "${INFLUX_BUCKET}")
+  |> range(start: -task.every)
+  |> filter(fn: (r) => r._measurement == "sungrow")
+  |> filter(fn: (r) => r._field == "load_power_w")
+  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))
+  |> window(every: ${INFLUX_DOWNSAMPLE_EVERY})
+  |> integral(unit: 1h)
+  |> map(fn: (r) => ({ r with _time: r._start, _measurement: "sungrow_energy", _field: "consumption_kwh", _value: r._value / 1000.0 }))
+  |> window(every: inf)
+
+grid = from(bucket: "${INFLUX_BUCKET}")
+  |> range(start: -task.every)
+  |> filter(fn: (r) => r._measurement == "sungrow")
+  |> filter(fn: (r) => r._field == "export_power_w")
+  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))
+  |> window(every: ${INFLUX_DOWNSAMPLE_EVERY})
+  |> integral(unit: 1h)
+  |> map(fn: (r) => ({ r with _time: r._start, _measurement: "sungrow_energy", _field: "grid_import_kwh", _value: r._value / 1000.0 }))
+  |> window(every: inf)
+
+union(tables: [production, consumption, grid])
+  |> keep(columns: ["_time", "_measurement", "_field", "_value"])
   |> to(bucket: "${INFLUX_DOWNSAMPLED_BUCKET}", org: "${INFLUX_ORG}")
 EOF_TASK
 
