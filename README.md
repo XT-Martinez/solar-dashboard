@@ -47,7 +47,7 @@ The dashboard currently uses the `sungrow` InfluxDB measurement and includes:
 - Current solar DC power
 - Solar yield for the selected Grafana time range
 - Grid consumption for the selected Grafana time range
-- Battery consumption for the selected Grafana time range
+- Battery discharge for the selected Grafana time range
 - Load power
 - Grid import power, shown as a positive value
 - MPPT 1/2 voltage and current, with separate voltage/current axes
