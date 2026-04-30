@@ -633,7 +633,7 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "top",
+          "placement": "bottom",
           "showLegend": true
         },
         "orientation": "auto",
@@ -647,7 +647,7 @@
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
-      "pluginVersion": "10.4.12",
+      "pluginVersion": "12.4.3",
       "targets": [
         {
           "query": "import \"date\"\nimport \"strings\"\n\nmonthStart = time(v: \"${month}-01T00:00:00+08:00\")\nmonthStop = date.add(d: 1mo, to: monthStart)\n\nfrom(bucket: \"solar_1h\")\n  |> range(start: monthStart, stop: monthStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow_energy\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"production_kwh\", \"consumption_kwh\", \"grid_import_kwh\"]))\n  |> map(fn: (r) => ({ r with _field: if r._field == \"production_kwh\" then \"Production\" else if r._field == \"consumption_kwh\" then \"Consumption\" else \"Grid_purchased\" }))\n  |> timeShift(duration: 8h)\n  |> window(every: 1d)\n  |> sum()\n  |> map(fn: (r) => ({ r with _time: r._start }))\n  |> window(every: inf)\n  |> keep(columns: [\"_time\", \"_field\", \"_value\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ Day: strings.substring(v: string(v: r._time), start: 5, end: 10), Production: r.Production, Consumption: r.Consumption, Grid_purchased: r.Grid_purchased }))\n  |> sort(columns: [\"Day\"])",
