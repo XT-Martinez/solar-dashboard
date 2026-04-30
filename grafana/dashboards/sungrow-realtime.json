@@ -53,10 +53,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 3,
-        "x": 9,
-        "y": 19
+        "x": 12,
+        "y": 21
       },
       "id": 1,
       "options": {
@@ -242,7 +242,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 3,
         "x": 15,
         "y": 14
@@ -267,7 +267,7 @@
       "pluginVersion": "10.4.12",
       "targets": [
         {
-          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) > 0.0 then float(v: r._value) else 0.0 }))\n  |> last()",
+          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"battery_power_w\", \"total_dc_power_w\", \"load_power_w\", \"export_power_w\"]))\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> aggregateWindow(every: 5s, fn: mean, createEmpty: false)\n  |> last()\n  |> pivot(rowKey: [\"_start\", \"_stop\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with _time: r._stop, _value: if float(v: r.total_dc_power_w) >= float(v: r.load_power_w) + (if float(v: r.export_power_w) < 0.0 then float(v: r.export_power_w) * -1.0 else 0.0) then float(v: r.battery_power_w) else 0.0 }))\n  |> keep(columns: [\"_time\", \"_value\"])",
           "refId": "A"
         }
       ],
@@ -305,10 +305,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 3,
         "x": 15,
-        "y": 16
+        "y": 17
       },
       "id": 16,
       "options": {
@@ -330,7 +330,7 @@
       "pluginVersion": "10.4.12",
       "targets": [
         {
-          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> last()",
+          "query": "from(bucket: \"solar\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r._measurement == \"sungrow\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"battery_power_w\", \"total_dc_power_w\", \"load_power_w\", \"export_power_w\"]))\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> aggregateWindow(every: 5s, fn: mean, createEmpty: false)\n  |> last()\n  |> pivot(rowKey: [\"_start\", \"_stop\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with _time: r._stop, _value: if float(v: r.total_dc_power_w) < float(v: r.load_power_w) + (if float(v: r.export_power_w) < 0.0 then float(v: r.export_power_w) * -1.0 else 0.0) then float(v: r.battery_power_w) else 0.0 }))\n  |> keep(columns: [\"_time\", \"_value\"])",
           "refId": "A"
         }
       ],
@@ -368,7 +368,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 3,
         "x": 12,
         "y": 14
@@ -464,7 +464,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 9,
         "x": 0,
         "y": 14
@@ -519,7 +519,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 3,
         "x": 18,
         "y": 19
@@ -694,7 +694,7 @@
       "pluginVersion": "10.4.12",
       "targets": [
         {
-          "query": "power = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"total_dc_power_w\", \"load_power_w\", \"export_power_w\"]))\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if r._field == \"export_power_w\" then if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 else float(v: r._value), _field: if r._field == \"export_power_w\" then \"grid_import_w\" else r._field }))\n\ncharge = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) > 0.0 then float(v: r._value) else 0.0, _field: \"battery_charge_w\" }))\n\ndischarge = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0, _field: \"battery_discharge_w\" }))\n\nunion(tables: [power, charge, discharge])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "query": "base = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"total_dc_power_w\", \"load_power_w\", \"export_power_w\", \"battery_power_w\"]))\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with grid_import_w: if float(v: r.export_power_w) < 0.0 then float(v: r.export_power_w) * -1.0 else 0.0, total_dc_power_w: float(v: r.total_dc_power_w), load_power_w: float(v: r.load_power_w), battery_power_w: float(v: r.battery_power_w) }))\n\nsolar = base |> map(fn: (r) => ({ r with _field: \"total_dc_power_w\", _value: r.total_dc_power_w })) |> keep(columns: [\"_time\", \"_field\", \"_value\"])\nload = base |> map(fn: (r) => ({ r with _field: \"load_power_w\", _value: r.load_power_w })) |> keep(columns: [\"_time\", \"_field\", \"_value\"])\ngrid = base |> map(fn: (r) => ({ r with _field: \"grid_import_w\", _value: r.grid_import_w })) |> keep(columns: [\"_time\", \"_field\", \"_value\"])\ncharge = base |> map(fn: (r) => ({ r with _field: \"battery_charge_w\", _value: if r.total_dc_power_w >= r.load_power_w + r.grid_import_w then r.battery_power_w else 0.0 })) |> keep(columns: [\"_time\", \"_field\", \"_value\"])\ndischarge = base |> map(fn: (r) => ({ r with _field: \"battery_discharge_w\", _value: if r.total_dc_power_w < r.load_power_w + r.grid_import_w then r.battery_power_w else 0.0 })) |> keep(columns: [\"_time\", \"_field\", \"_value\"])\n\nunion(tables: [solar, load, grid, charge, discharge])\n  |> group(columns: [\"_field\"])",
           "refId": "A"
         }
       ],
@@ -786,7 +786,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 24
       },
       "id": 6,
       "options": {
@@ -991,7 +991,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 24
       },
       "id": 7,
       "options": {
@@ -1115,7 +1115,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 34
       },
       "id": 8,
       "options": {
@@ -1217,7 +1217,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 34
       },
       "id": 9,
       "options": {
@@ -1277,10 +1277,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 3,
         "x": 12,
-        "y": 19
+        "y": 18
       },
       "id": 10,
       "options": {
@@ -1332,7 +1332,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 3,
         "x": 21,
         "y": 19
@@ -1387,10 +1387,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 3,
         "x": 15,
-        "y": 18
+        "y": 20
       },
       "id": 12,
       "options": {
@@ -1412,7 +1412,7 @@
       "pluginVersion": "10.4.12",
       "targets": [
         {
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"battery_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: if float(v: r._value) < 0.0 then float(v: r._value) * -1.0 else 0.0 }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
+          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"battery_power_w\", \"total_dc_power_w\", \"load_power_w\", \"export_power_w\"]))\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> aggregateWindow(every: 5s, fn: mean, createEmpty: false)\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with _field: \"battery_discharge_w\", _value: if float(v: r.total_dc_power_w) < float(v: r.load_power_w) + (if float(v: r.export_power_w) < 0.0 then float(v: r.export_power_w) * -1.0 else 0.0) then float(v: r.battery_power_w) else 0.0 }))\n  |> keep(columns: [\"_start\", \"_stop\", \"_time\", \"_field\", \"_value\"])\n  |> group(columns: [\"_start\", \"_stop\", \"_field\"])\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
           "refId": "A"
         }
       ],
@@ -1480,6 +1480,61 @@
         }
       ],
       "title": "Current Load",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "kWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 9,
+        "y": 19
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.12",
+      "targets": [
+        {
+          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"sungrow\" and r._field == \"load_power_w\")\n  |> drop(columns: [\"host\", \"name\", \"slave_id\", \"type\"])\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) }))\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Load Consumption",
       "type": "stat"
     }
   ],
